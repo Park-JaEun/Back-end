@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from contextlib import asynccontextmanager
 from sqlmodel import Session, select
 from models.users import Menu
-from database.connection import create_tables, get_session
+from database.connection import create_tables, get_mysql_session
 
 
 @asynccontextmanager
@@ -15,19 +15,19 @@ async def lifespan(app:FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
-async def get_user(session=Depends(get_session)):
+async def get_user(session=Depends(get_mysql_session)):
 	return session.exec(select(Menu)).all()
 
 # 모든 메뉴 출력
 @app.get("/menus/", response_model=list[Menu])
-def get_all_menus(session: Session = Depends(get_session)):
+def get_all_menus(session: Session = Depends(get_mysql_session)):
     
     menus = session.exec(select(Menu)).all()
     return menus
 
 # 특정 메뉴 검색
 @app.get("/menus/{menu_id}", response_model=Menu)
-def get_menu(menu_id: int, session: Session = Depends(get_session)):
+def get_menu(menu_id: int, session: Session = Depends(get_mysql_session)):
 
     menu = session.get(Menu, menu_id)
     if not menu:
@@ -36,7 +36,7 @@ def get_menu(menu_id: int, session: Session = Depends(get_session)):
 
 # 메뉴 추가
 @app.post("/menus/", response_model=Menu)
-def create_menu(menu: Menu, session: Session = Depends(get_session)):
+def create_menu(menu: Menu, session: Session = Depends(get_mysql_session)):
    
     session.add(menu)
     session.commit()
@@ -46,7 +46,7 @@ def create_menu(menu: Menu, session: Session = Depends(get_session)):
 
 # 메뉴 삭제
 @app.delete("/menus/{menu_id}", response_model=Menu)
-def delete_menu(menu_id: int, session: Session = Depends(get_session)):
+def delete_menu(menu_id: int, session: Session = Depends(get_mysql_session)):
     # 삭제할 메뉴 검색
     db_menu = session.get(Menu, menu_id)
     if not db_menu:
@@ -59,7 +59,7 @@ def delete_menu(menu_id: int, session: Session = Depends(get_session)):
 
 # 메뉴 수정
 @app.put("/menus/{menu_id}", response_model=Menu)
-def update_menu(menu_id: int, new_menu: Menu, session: Session = Depends(get_session)):
+def update_menu(menu_id: int, new_menu: Menu, session: Session = Depends(get_mysql_session)):
     # 수정할 메뉴 검색
     db_menu = session.get(Menu, menu_id)
     if not db_menu:
