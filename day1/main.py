@@ -1,13 +1,18 @@
 from fastapi import FastAPI, Depends, HTTPException
+from contextlib import asynccontextmanager
 from sqlmodel import Session, select
 from models.users import Menu
-from database.connection import conn, get_session
+from database.connection import create_tables, get_session
 
-app = FastAPI()
 
-@app.on_event("startup")
-def on_startup():
-    conn()
+@asynccontextmanager
+async def lifespan(app:FastAPI):
+    create_tables()
+    
+    yield
+    # 애플리케이션 종료 시 실행될 코드
+
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 async def get_user(session=Depends(get_session)):
@@ -35,6 +40,7 @@ def create_menu(menu: Menu, session: Session = Depends(get_session)):
    
     session.add(menu)
     session.commit()
+    
     session.refresh(menu)
     return menu
 
@@ -70,10 +76,3 @@ def update_menu(menu_id: int, new_menu: Menu, session: Session = Depends(get_ses
     session.refresh(db_menu)
     
     return db_menu  # 업데이트된 메뉴 리턴
-
-
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
