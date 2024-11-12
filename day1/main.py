@@ -1,14 +1,17 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Response
 from contextlib import asynccontextmanager
 from sqlmodel import Session, select
 from models.users import Menu
 from database.connection import create_tables, get_mysql_session
 
 
+from pydantic import BaseModel  # Pydantic 모델을 정의하는 데 필요
+
+
 @asynccontextmanager
 async def lifespan(app:FastAPI):
     create_tables()
-    
+    # 애플리케이션 실행 시 실행될 코드
     yield
     # 애플리케이션 종료 시 실행될 코드
 
@@ -66,13 +69,20 @@ def update_menu(menu_id: int, new_menu: Menu, session: Session = Depends(get_mys
         raise HTTPException(status_code=404, detail="no menu")
     
     # 메뉴 정보 업데이트
-    if new_menu is not None:
+    if new_menu.menuname is not None:
         db_menu.menuname = new_menu.menuname
     if new_menu.one_time_offer is not None:
         db_menu.one_time_offer = new_menu.one_time_offer
-    
-    session.add(db_menu)
+       
+    # exclude_unset=True 옵션: exclude_unset=True를 통해 new_menu에서 설정된 값만 딕셔너리에 포함
+    menu_data = new_menu.model_dump(exclude_unset=True) 
+
+    for key, value in menu_data.items():
+        setattr(db_menu, key, value)    # 데이터베이스 객체의 각 속성에 새 값을 할당
+
     session.commit()
-    session.refresh(db_menu)
     
-    return db_menu  # 업데이트된 메뉴 리턴
+    return Response(status_code=200, content="update menu")
+
+
+

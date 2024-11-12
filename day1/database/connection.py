@@ -23,12 +23,6 @@ def create_tables():
 	SQLModel.metadata.create_all(SQLITE_ENGINE)
 	SQLModel.metadata.create_all(MYSQL_ENGINE)
 
-# def get_session():
-#     # 세션을 제공하는 종속성 함수
-#     with Session(ENGINE) as session:
-#         yield session
-
-
 '''
 여러 상황에 따라 데이터베이스를 여러개 사용하게 된다면 
 연결할 각 데이터베이스를 호출하는 함수들을 만들어두고 

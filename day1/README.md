@@ -16,3 +16,14 @@
 - 유연한 데이터베이스 사용: 요청에 따라 각기 다른 데이터베이스와 연결해서 다양한 데이터베이스를 유연하게 사용할 수 있다. 
 
 --> 다중 데이터베이스 구조를 관리할 수 있다.
+
+## update_menu api 수정
+2024-11-12
+
+- `model_dump(exclude_unset=True)` 사용
+    
+    `model_dump(exclude_unset=True)`를 사용하여 `new_menu`에서 설정된 값만 딕셔너리로 가져온 후, 자동으로 필드에 할당한다. `model_dump(exclude_unset=True)`는 `new_menu`에 설정된 필드만 가져오기 때문에 매번 모든 필드를 수동으로 확인할 필요가 없다.
+    
+- `session.add()` 생략
+    
+    `session.get()`으로 가져온 객체는 이미 세션에 연결되어 있어 `add()`가 필요하지 않다.

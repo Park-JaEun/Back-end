@@ -1,8 +1,8 @@
-
 /day1/database/__pycache__
 /day1/models/__pycache__
-day1/sqlite3.db
+*.db
 /day1/.venv
 /day1/__pycache__
-day1/.env
+*.env
 day1/$(DATABASE_FILE)
+*.txt

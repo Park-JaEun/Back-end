@@ -6,3 +6,4 @@ class MenuBase(SQLModel):
 
 class Menu(MenuBase, table=True):
 	id: int = Field(default=None, primary_key=True)
+	is_delete: int = Field(default=0)
