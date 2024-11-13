@@ -47,9 +47,9 @@ def create_menu(menu: Menu, session: Session = Depends(get_mysql_session)):
     session.refresh(menu)
     return menu
 
-# 메뉴 삭제
-@app.delete("/menus/{menu_id}", response_model=Menu)
-def delete_menu(menu_id: int, session: Session = Depends(get_mysql_session)):
+# 메뉴 완전히 삭제
+@app.delete("/menus/admin/delete/{menu_id}", response_model=Menu)
+def hard_delete_menu(menu_id: int, session: Session = Depends(get_mysql_session)):
     # 삭제할 메뉴 검색
     db_menu = session.get(Menu, menu_id)
     if not db_menu:
@@ -58,7 +58,23 @@ def delete_menu(menu_id: int, session: Session = Depends(get_mysql_session)):
     # 메뉴 삭제
     session.delete(db_menu)
     session.commit()
-    return db_menu  # 삭제한 메뉴 정보 반환
+    return Response(status_code=200, content="hard delete menu")
+
+# 메뉴 삭제
+@app.delete("/menus/delete/{menu_id}", response_model=Menu)
+def soft_delete_menu(menu_id: int, session: Session = Depends(get_mysql_session)):
+    # 삭제할 메뉴 검색
+    db_menu = session.get(Menu, menu_id)
+    if not db_menu:
+        raise HTTPException(status_code=404, detail="no menu")
+    
+    # soft delete: is_delete 값을 1로 설정
+    db_menu.is_delete = 1
+
+    # 변경 사항 커밋
+    session.commit()
+    
+    return Response(status_code=200, content="delete menu")
 
 # 메뉴 수정
 @app.put("/menus/{menu_id}", response_model=Menu)
