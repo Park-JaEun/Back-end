@@ -21,10 +21,15 @@ app = FastAPI(lifespan=lifespan)
 async def get_user(session=Depends(get_mysql_session)):
 	return session.exec(select(Menu)).all()
 
+# is_delete가 0인 메뉴만 출력
+@app.get("/menus/all", response_model=list[Menu])
+def get_active_menus(session: Session = Depends(get_mysql_session)):
+    menus = session.exec(select(Menu).where(Menu.is_delete == 0)).all()
+    return menus
+
 # 모든 메뉴 출력
-@app.get("/menus/", response_model=list[Menu])
+@app.get("/menus/admin/all", response_model=list[Menu])
 def get_all_menus(session: Session = Depends(get_mysql_session)):
-    
     menus = session.exec(select(Menu)).all()
     return menus
 

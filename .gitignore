@@ -6,3 +6,4 @@
 *.env
 day1/$(DATABASE_FILE)
 *.txt
+/day2/.venv
