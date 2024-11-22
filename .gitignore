@@ -239,6 +239,4 @@ $RECYCLE.BIN/
 *.db
 **/$(DATABASE_FILE)
 *.txt
-/day2/.venv
-**/__pycache__
-*.pyc
+
