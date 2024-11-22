@@ -54,18 +54,18 @@
 2024-11-15
 
 - Menu class
-데이터베이스에 저장되는 실제 테이블 정의.
-sa_column=Column(...)을 사용해 SQLAlchemy 스타일로 정의.
+    - 데이터베이스에 저장되는 실제 테이블 정의.
+    - sa_column=Column(...)을 사용해 SQLAlchemy 스타일로 정의.
 
 - MenuCreate api
-API에서 클라이언트가 요청(Request)할 때 사용할 모델.
-필요한 필드만 포함.
+    - API에서 클라이언트가 요청(Request)할 때 사용할 모델.
+    - 필요한 필드만 포함.
 
 - MenuResponse api
-API에서 클라이언트에게 반환(Response)할 때 사용할 모델.
-데이터베이스의 모든 필드를 포함.
+    - API에서 클라이언트에게 반환(Response)할 때 사용할 모델.
+    - 데이터베이스의 모든 필드를 포함.
 
 - menuname 필드 수정
-sa_column=Column(String(255), nullable=False)로 수정.
-VARCHAR 타입에 255 길이를 지정.
-나머지 필드는 기존 구조를 유지하면서 SQLAlchemy Column으로 정의.
+    - sa_column=Column(String(255), nullable=False)로 수정.
+    - VARCHAR 타입에 255 길이를 지정.
+    - 나머지 필드는 기존 구조를 유지하면서 SQLAlchemy Column으로 정의.

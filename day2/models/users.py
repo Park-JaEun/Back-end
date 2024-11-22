@@ -13,7 +13,7 @@ class Menu(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)  # 메뉴 ID
     menuname: str = Field(sa_column=Column(String(255), nullable=False))  # 메뉴 이름
     one_time_offer: int = Field(sa_column=Column(Integer, default=0))  # 단품 제공 여부
-    is_delete: int = Field(sa_column=Column(Integer, default=0))  # 삭제 여부 (소프트 삭제)
+    is_delete: int = Field( default=0, sa_column=Column(Integer, default=0))  # 삭제 여부 (소프트 삭제)
 
 # 요청(Request)용 모델
 class MenuCreate(SQLModel):
@@ -51,7 +51,7 @@ class UserDB(UserBase, table=True):
 class UserCreate(SQLModel):
     user_id: str  # 유저 ID
     user_pw: str  # 비밀번호
-    is_admin: int = False  # 기본값은 일반 유저
+    is_admin: int = 0  # 기본값은 일반 유저
 
 # 클라이언트 응답 시 반환할 유저 데이터 모델
 class UserResponse(SQLModel):
