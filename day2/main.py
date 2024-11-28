@@ -1,20 +1,25 @@
-from fastapi import FastAPI, Depends, HTTPException, Response, Security
+from datetime import timedelta, datetime  # JWT 만료시간
 from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Depends, HTTPException, Response, Security
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jose import JWTError, jwt  # JWT 생성 및 인증
+from passlib.context import CryptContext  # 비밀번호 해싱 및 검증
 from sqlmodel import Session, select
+from dotenv import load_dotenv
+import os
+
+from models.users import UserDB, UserCreate, UserResponse  # 유저 모델
 from database.connection import create_tables, get_mysql_session
 from models.users import Menu, MenuCreate, MenuResponse
 
-from models.users import UserDB, UserCreate, UserResponse  # 유저 모델
-from datetime import timedelta, datetime  # JWT 만료시간
-from jose import JWTError, jwt  # JWT 생성 및 인증
-from passlib.context import CryptContext  # 비밀번호 해싱 및 검증
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+# .env 파일 로드
+load_dotenv()
 
-# JWT 관련 설정
-SECRET_KEY = "ddoavoca"  # 비밀 키 (보안 유지)
-ALGORITHM = "HS256"  # 사용할 암호화 알고리즘
-ACCESS_TOKEN_EXPIRE_MINUTES = 30  # 액세스 토큰 만료 시간 (30분)
-
+# 환경 변수에서 MySQL URL 가져오기
+SECRET_KEY = os.getenv("SECRET_KEY")    # 비밀 키 (보안 유지)
+ALGORITHM = os.getenv("ALGORITHM")      # 사용할 암호화 알고리즘
+ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES") # 액세스 토큰 만료 시간 (30분)
 
 # 비밀번호 해싱 및 검증을 위한 설정
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
