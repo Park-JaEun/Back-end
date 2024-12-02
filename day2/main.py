@@ -159,7 +159,7 @@ def soft_delete_menu(
 
 
 # 메뉴 수정 +)JWT 검증
-@app.put("/menus/admin/{menu_id}")
+@app.patch("/menus/admin/{menu_id}")
 def update_menu(
     menu_id: int, 
     new_menu: MenuCreate,   # 메뉴 업데이트 시에는 메뉴 이름과 offer만 입력하면 되니 Menu가 아닌 MenuCreate class
@@ -169,16 +169,10 @@ def update_menu(
     # admin인지 확인 후 아니면 에러반환
     if current_user.is_admin != 1:
         raise HTTPException(status_code=403, detail="관리자 권환이 필요합니다.")
-
     
     db_menu = session.get(Menu, menu_id)
     if not db_menu:
         raise HTTPException(status_code=404, detail="no menu")
-
-    if new_menu.menuname is not None:
-        db_menu.menuname = new_menu.menuname
-    if new_menu.one_time_offer is not None:
-        db_menu.one_time_offer = new_menu.one_time_offer
 
     menu_data = new_menu.model_dump(exclude_unset=True)
 
