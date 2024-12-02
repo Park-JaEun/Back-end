@@ -19,7 +19,7 @@ load_dotenv()
 # 환경 변수에서 MySQL URL 가져오기
 SECRET_KEY = os.getenv("SECRET_KEY")    # 비밀 키 (보안 유지)
 ALGORITHM = os.getenv("ALGORITHM")      # 사용할 암호화 알고리즘
-ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES") # 액세스 토큰 만료 시간 (30분)
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")) # 액세스 토큰 만료 시간 (30분)
 
 # 비밀번호 해싱 및 검증을 위한 설정
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -63,23 +63,36 @@ app = FastAPI(lifespan=lifespan)
 @app.get("/menus/search/{menu_id}", response_model=Menu)
 def get_menu_by_id(
     menu_id: int, 
-    session: Session = Depends(get_db)):
-    menu = session.get(Menu, menu_id)
+    session: Session = Depends(get_db)
+    ):
+
+    # menu = session.get(Menu, menu_id)
+    # menu = session.exec(select(Menu).where(Menu.is_delete == 0, Menu.id == 0)).first()
+    menu = session.exec(Menu).filter(Menu.menu_id == menu_id, Menu.is_delete == 0).first()
+
     if not menu:
         raise HTTPException(status_code=404, detail="메뉴를 찾을 수 없습니다.")
     return menu
 
 # is_delete가 0인 메뉴만 출력 +)JWT 검증
 @app.get("/menus/all", response_model=list[MenuResponse])
-def get_active_menus(session: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
+def get_active_menus(
+    session: Session = Depends(get_db)
+    ):
 
-    menus = session.exec(select(Menu).where(Menu.is_delete == 0)).all()
+    # menus = session.exec(select(Menu).where(Menu.is_delete == 0)).all()
+    menus = session.exec(Menu).filter(Menu.is_delete == 0).all()
+
     return menus
 
 ''' 관리자 유저'''
 # 모든 메뉴 출력 +)JWT 검증
 @app.get("/menus/admin/all", response_model=list[MenuResponse])
-def get_menu(session: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
+def get_menu(
+    session: Session = Depends(get_db), 
+    current_user: UserDB = Depends(get_current_user)
+    ):
+
     # admin인지 확인 후 아니면 에러반환
     if current_user.is_admin != 1:
         raise HTTPException(status_code=403, detail="관리자 권환이 필요합니다.")
@@ -88,7 +101,11 @@ def get_menu(session: Session = Depends(get_db), current_user: UserDB = Depends(
 
 # 메뉴 추가 +)JWT 검증, admin 확인
 @app.post("/menus/admin/add", response_model=MenuResponse)
-def create_menu(menu: MenuCreate, session: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
+def create_menu(
+    menu: MenuCreate, 
+    session: Session = Depends(get_db), 
+    current_user: UserDB = Depends(get_current_user)):
+
     # admin인지 확인 후 아니면 에러반환
     if current_user.is_admin != 1:
         raise HTTPException(status_code=403, detail="관리자 권환이 필요합니다.")
@@ -100,8 +117,12 @@ def create_menu(menu: MenuCreate, session: Session = Depends(get_db), current_us
     return db_menu
 
 # 메뉴 완전히 삭제 +)JWT 검증
-@app.delete("/menus/admin/delete/{menu_id}", response_model=Menu)
-def hard_delete_menu(menu_id: int, session: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
+@app.delete("/menus/admin/delete/{menu_id}")
+def hard_delete_menu(
+    menu_id: int, 
+    session: Session = Depends(get_db), 
+    current_user: UserDB = Depends(get_current_user)):
+
     # admin인지 확인 후 아니면 에러반환
     if current_user.is_admin != 1:
         raise HTTPException(status_code=403, detail="관리자 권환이 필요합니다.")
@@ -117,8 +138,11 @@ def hard_delete_menu(menu_id: int, session: Session = Depends(get_db), current_u
     return Response(status_code=200, content="hard delete menu")
 
 # 메뉴 삭제 +)JWT 검증
-@app.delete("/menus/admin/delete/{menu_id}", response_model=Menu)
-def soft_delete_menu(menu_id: int, session: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
+@app.delete("/menus/admin/delete/{menu_id}")
+def soft_delete_menu(
+    menu_id: int, session: Session = Depends(get_db), 
+    current_user: UserDB = Depends(get_current_user)):
+    
     # admin인지 확인 후 아니면 에러반환
     if current_user.is_admin != 1:
         raise HTTPException(status_code=403, detail="관리자 권환이 필요합니다.")
@@ -135,8 +159,13 @@ def soft_delete_menu(menu_id: int, session: Session = Depends(get_db), current_u
 
 
 # 메뉴 수정 +)JWT 검증
-@app.put("/menus/admin/{menu_id}", response_model=Menu)
-def update_menu(menu_id: int, new_menu: Menu, session: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
+@app.put("/menus/admin/{menu_id}")
+def update_menu(
+    menu_id: int, 
+    new_menu: MenuCreate,   # 메뉴 업데이트 시에는 메뉴 이름과 offer만 입력하면 되니 Menu가 아닌 MenuCreate class
+    session: Session = Depends(get_db), 
+    current_user: UserDB = Depends(get_current_user)):
+
     # admin인지 확인 후 아니면 에러반환
     if current_user.is_admin != 1:
         raise HTTPException(status_code=403, detail="관리자 권환이 필요합니다.")
@@ -164,7 +193,10 @@ def update_menu(menu_id: int, new_menu: Menu, session: Session = Depends(get_db)
 
 ''' user 관련 '''
 # JWT 생성 함수
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
+def create_access_token(
+    data: dict, 
+    expires_delta: timedelta | None = None):
+
     to_encode = data.copy()  # JWT에 포함할 데이터를 복사
     if expires_delta:  # 만료 시간이 지정된 경우
         expire = datetime.now() + expires_delta
@@ -176,13 +208,18 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 # 모든 유저 출력
 @app.get("/user/all", response_model=list[UserResponse])
-def get_all_users(session: Session = Depends(get_db)):
+def get_all_users(
+    session: Session = Depends(get_db)):
+
     users = session.exec(select(UserDB)).all()
     return users
 
 # 회원가입
-@app.post("/user/add", response_model=UserResponse)
-def add_user(user: UserCreate, session: Session = Depends(get_db)):
+@app.post("/user/add")
+def add_user(
+    user: UserCreate, 
+    session: Session = Depends(get_db)):
+
     # 이미 등록된 유저인지 확인
     db_user = session.exec(select(UserDB).where(UserDB.user_id == user.user_id)).first()
     if db_user:  # 중복된 유저 ID인 경우 예외 발생
@@ -201,7 +238,12 @@ def add_user(user: UserCreate, session: Session = Depends(get_db)):
 
 # 로그인
 @app.post("/login")
-def login(user_id: str, user_pw: str, session: Session = Depends(get_db)):
+def login(
+    user_id: str, 
+    user_pw: str, 
+    session: Session = Depends(get_db)
+    ):
+
     # 유저 ID로 데이터베이스에서 유저 검색
     db_user = session.exec(select(UserDB).where(UserDB.user_id == user_id)).first()
     # 유저가 존재하지 않거나 비밀번호가 틀린 경우
@@ -217,7 +259,11 @@ def login(user_id: str, user_pw: str, session: Session = Depends(get_db)):
 
 # 관리자 권한 부여
 @app.put("/admin/grant/{user_id}")
-def grant_admin(user_id: str, session: Session = Depends(get_db)):
+def grant_admin(
+    user_id: str, 
+    session: Session = Depends(get_db)
+    ):
+    
     # 유저 ID로 데이터베이스에서 유저 검색
     db_user = session.exec(select(UserDB).where(UserDB.user_id == user_id)).first()
     if not db_user:  # 유저가 존재하지 않으면 예외 발생
@@ -231,7 +277,11 @@ def grant_admin(user_id: str, session: Session = Depends(get_db)):
 
 # 관리자 권한 제거
 @app.put("/admin/revoke/{user_id}")
-def revoke_admin(user_id: str, session: Session = Depends(get_db)):
+def revoke_admin(
+    user_id: str, 
+    session: Session = Depends(get_db)
+    ):
+
     # 유저 ID로 데이터베이스에서 유저 검색
     db_user = session.exec(select(UserDB).where(UserDB.user_id == user_id)).first()
     if not db_user:  # 유저가 존재하지 않으면 예외 발생
