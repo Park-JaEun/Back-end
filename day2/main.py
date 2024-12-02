@@ -209,8 +209,8 @@ def get_all_users(
     return users
 
 # 회원가입
-@app.post("/user/add")
-def add_user(
+@app.post("/signup")
+def signup(
     user: UserCreate, 
     session: Session = Depends(get_db)):
 
