@@ -14,7 +14,7 @@ if not MYSQL_URL:
 engine = create_engine(MYSQL_URL, echo=True)
 
 # 데이터베이스 세션 제공
-def get_mysql_session():
+def get_db():
     with Session(engine) as session:
         yield session
 
