@@ -1,10 +1,14 @@
+
+---
+---
 ## 유저 DB table
 2024-11-22
 
 - User 모델
     - 데이터베이스에서 사용할 유저 정보를 담은 테이블 정의.
     - created_at 및 updated_at으로 생성/수정 시간을 기록.
-
+---
+---
 ## 회원 가입
 2024-11-22
 1. 회원가입 요청 처리
@@ -28,7 +32,8 @@
 6. 응답 반환
 - 회원가입 성공 시, 새 유저 데이터를 반환.
 - 반환 모델은 필수 정보만 있는 UserResponse.
-
+---
+---
 ## JWT 인증
 2024-11-22
 
@@ -40,7 +45,8 @@ create_access_token 함수로 JWT 생성.
 
 - 메뉴 API에 로그인 확인 의존성 적용
     - 모든 메뉴 API 엔드포인트에 의존성을 추가해 로그인 상태를 확인함.
-
+---
+---
 ## create_access_token 함수
 2024-11-22
 
@@ -61,7 +67,8 @@ exp 키를 통해 만료 시간을 데이터에 추가.
 생성된 JWT 문자열을 반환.
 
 
-
+---
+---
 ## admin(관리자)만 menu를 수정, 삭제할 수 있도록
 2024-11-22
 
@@ -74,7 +81,8 @@ exp 키를 통해 만료 시간을 데이터에 추가.
 
     - 사용자 정보(current_user)에서 is_admin 확인.
     - 관리자 권한(is_admin == 1)이 없으면 403 에러를 반환.
-
+---
+---
 ## 코드 보완
 2024-11-25
 ### 1. import 구문 작성 순서
@@ -91,3 +99,18 @@ user_id를 토큰에서 추출할 때 이미 토큰이 유효하지 않으면 �
 
 ### 5. 불필요한 DB 접근 코드 제거
 get_active_menus에서 current_user는 필요하지 않은 정보이기 때문에 제거.
+
+---
+2024-12-03
+### 6. Passlib.context.CryptContext를 Argon2로 교체
+
+passlib.context.CryptContext 대신 argon2 라이브러리로 비밀번호 해싱과 검증 처리한다.
+bcrypt를 사용한 부분은 argon2로 변경해 비밀번호를 해싱하고 검증한다.
+PasswordHasher 객체를 생성하고 hash 메서드로 비밀번호를 해싱해 verify 메서드로 비밀번호를 검증한다.
+
+### 7. JWT 생성 및 검증
+
+jose 라이브러리 대신 PyJWT를 사용하여 JWT를 생성하고 검증한다.
+jwt.encode로 JWT를 인코딩하고, jwt.decode로 디코딩한다.
+jose.JWTError는 PyJWT에서는 jwt.JWTError로 변경한다.
+jose.JWTError 예외 처리를 jwt.ExpiredSignatureError, jwt.JWTError로 처리한다.
