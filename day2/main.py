@@ -3,8 +3,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Depends, HTTPException, Response, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt  # JWT 생성 및 인증
-from passlib.context import CryptContext  # 비밀번호 해싱 및 검증
+# from jose import JWTError, jwt  # JWT 생성 및 인증
+# from passlib.context import CryptContext  # 비밀번호 해싱 및 검증
+import jwt  # PyJWT 사용
+from argon2 import PasswordHasher  # argon2 사용
+# from argon2.exceptions import VerificationError, InvalidHash
 from sqlmodel import Session, select
 from dotenv import load_dotenv
 import os
@@ -22,7 +25,8 @@ ALGORITHM = os.getenv("ALGORITHM")      # 사용할 암호화 알고리즘
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")) # 액세스 토큰 만료 시간 (30분)
 
 # 비밀번호 해싱 및 검증을 위한 설정
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = PasswordHasher()
 
 # HTTPBearer 보안 스키마
 security = HTTPBearer()
@@ -45,7 +49,9 @@ def get_current_user(
             raise HTTPException(status_code=401, detail="유저를 찾을 수 없습니다.")
         return user
     
-    except JWTError:
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다.")
+    except jwt.JWTError:
         raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다.")
 
 
@@ -67,8 +73,7 @@ def get_menu_by_id(
     ):
 
     # menu = session.get(Menu, menu_id)
-    # menu = session.exec(select(Menu).where(Menu.is_delete == 0, Menu.id == 0)).first()
-    menu = session.exec(Menu).filter(Menu.menu_id == menu_id, Menu.is_delete == 0).first()
+    menu = session.exec(select(Menu).where(Menu.is_delete == 0, Menu.id == 0)).first()
 
     if not menu:
         raise HTTPException(status_code=404, detail="메뉴를 찾을 수 없습니다.")
@@ -80,8 +85,8 @@ def get_active_menus(
     session: Session = Depends(get_db)
     ):
 
-    # menus = session.exec(select(Menu).where(Menu.is_delete == 0)).all()
-    menus = session.exec(Menu).filter(Menu.is_delete == 0).all()
+    menus = session.exec(select(Menu).where(Menu.is_delete == 0)).all()
+    # menus = session.query(Menu).filter(Menu.is_delete == 0)
 
     return menus
 
@@ -240,8 +245,11 @@ def login(
 
     # 유저 ID로 데이터베이스에서 유저 검색
     db_user = session.exec(select(UserDB).where(UserDB.user_id == user_id)).first()
+    # print("Stored hash:", db_user.user_pw)
+
+
     # 유저가 존재하지 않거나 비밀번호가 틀린 경우
-    if not db_user or not pwd_context.verify(user_pw, db_user.user_pw):
+    if not db_user or not pwd_context.verify(db_user.user_pw, user_pw):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     
     # JWT 액세스 토큰 생성
