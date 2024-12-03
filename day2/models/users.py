@@ -20,9 +20,6 @@ class TimeStamp(SQLModel):
 메뉴
 '''
 # 데이터베이스에서 사용할 기본 Menu 테이블
-class MenuBase(SQLModel):
-    pass
-
 class Menu(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)  # 메뉴 ID
     menuname: str = Field(sa_column=Column(String(255), nullable=False))  # 메뉴 이름
