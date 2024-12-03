@@ -21,5 +21,5 @@ def get_db():
 # 데이터베이스 테이블 생성
 def create_tables():
     from sqlmodel import SQLModel
-    from models.users import Menu, UserDB
+    from models.users import Menu, User
     SQLModel.metadata.create_all(engine)

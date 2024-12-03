@@ -3,16 +3,13 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Depends, HTTPException, Response, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-# from jose import JWTError, jwt  # JWT 생성 및 인증
-# from passlib.context import CryptContext  # 비밀번호 해싱 및 검증
 import jwt  # PyJWT 사용
 from argon2 import PasswordHasher  # argon2 사용
-# from argon2.exceptions import VerificationError, InvalidHash
 from sqlmodel import Session, select
 from dotenv import load_dotenv
 import os
 
-from models.users import UserDB, UserCreate, UserResponse  # 유저 모델
+from models.users import User, UserResponse, UserCreate  # 유저 모델
 from database.connection import create_tables, get_db
 from models.users import Menu, MenuCreate, MenuResponse
 
@@ -25,7 +22,6 @@ ALGORITHM = os.getenv("ALGORITHM")      # 사용할 암호화 알고리즘
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")) # 액세스 토큰 만료 시간 (30분)
 
 # 비밀번호 해싱 및 검증을 위한 설정
-# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 pwd_context = PasswordHasher()
 
 # HTTPBearer 보안 스키마
@@ -44,7 +40,7 @@ def get_current_user(
         user_id: str = payload.get("sub")
         
         # 유효한 토큰이면 유저 정보를 저장
-        user = session.exec(select(UserDB).where(UserDB.user_id == user_id)).first()    
+        user = session.exec(select(User).where(User.user_id == user_id)).first()    
         if user is None:
             raise HTTPException(status_code=401, detail="유저를 찾을 수 없습니다.")
         return user
@@ -73,7 +69,7 @@ def get_menu_by_id(
     ):
 
     # menu = session.get(Menu, menu_id)
-    menu = session.exec(select(Menu).where(Menu.is_delete == 0, Menu.id == 0)).first()
+    menu = session.exec(select(Menu).where(Menu.is_delete == 0, Menu.id == menu_id)).first()
 
     if not menu:
         raise HTTPException(status_code=404, detail="메뉴를 찾을 수 없습니다.")
@@ -95,7 +91,7 @@ def get_active_menus(
 @app.get("/menus/admin/all", response_model=list[MenuResponse])
 def get_menu(
     session: Session = Depends(get_db), 
-    current_user: UserDB = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
     ):
 
     # admin인지 확인 후 아니면 에러반환
@@ -109,7 +105,7 @@ def get_menu(
 def create_menu(
     menu: MenuCreate, 
     session: Session = Depends(get_db), 
-    current_user: UserDB = Depends(get_current_user)):
+    current_user: User = Depends(get_current_user)):
 
     # admin인지 확인 후 아니면 에러반환
     if current_user.is_admin != 1:
@@ -122,11 +118,11 @@ def create_menu(
     return db_menu
 
 # 메뉴 완전히 삭제 +)JWT 검증
-@app.delete("/menus/admin/delete/{menu_id}")
+@app.delete("/menus/admin/delete/hard/{menu_id}")
 def hard_delete_menu(
     menu_id: int, 
     session: Session = Depends(get_db), 
-    current_user: UserDB = Depends(get_current_user)):
+    current_user: User = Depends(get_current_user)):
 
     # admin인지 확인 후 아니면 에러반환
     if current_user.is_admin != 1:
@@ -143,10 +139,10 @@ def hard_delete_menu(
     return Response(status_code=200, content="hard delete menu")
 
 # 메뉴 삭제 +)JWT 검증
-@app.delete("/menus/admin/delete/{menu_id}")
+@app.delete("/menus/admin/delete/soft/{menu_id}")
 def soft_delete_menu(
     menu_id: int, session: Session = Depends(get_db), 
-    current_user: UserDB = Depends(get_current_user)):
+    current_user: User = Depends(get_current_user)):
     
     # admin인지 확인 후 아니면 에러반환
     if current_user.is_admin != 1:
@@ -169,7 +165,7 @@ def update_menu(
     menu_id: int, 
     new_menu: MenuCreate,   # 메뉴 업데이트 시에는 메뉴 이름과 offer만 입력하면 되니 Menu가 아닌 MenuCreate class
     session: Session = Depends(get_db), 
-    current_user: UserDB = Depends(get_current_user)):
+    current_user: User = Depends(get_current_user)):
 
     # admin인지 확인 후 아니면 에러반환
     if current_user.is_admin != 1:
@@ -210,7 +206,7 @@ def create_access_token(
 def get_all_users(
     session: Session = Depends(get_db)):
 
-    users = session.exec(select(UserDB)).all()
+    users = session.exec(select(User)).all()
     return users
 
 # 회원가입
@@ -220,13 +216,13 @@ def signup(
     session: Session = Depends(get_db)):
 
     # 이미 등록된 유저인지 확인
-    db_user = session.exec(select(UserDB).where(UserDB.user_id == user.user_id)).first()
+    db_user = session.exec(select(User).where(User.user_id == user.user_id)).first()
     if db_user:  # 중복된 유저 ID인 경우 예외 발생
         raise HTTPException(status_code=409, detail="User already registered")
     
     # 비밀번호 데이터베이스에 저장
     hashed_password = pwd_context.hash(user.user_pw)
-    new_user = UserDB(
+    new_user = User(
         user_id=user.user_id, user_pw=hashed_password, is_admin=user.is_admin
     )  # 유저 데이터 생성
     print(new_user.user_id)
@@ -244,13 +240,17 @@ def login(
     ):
 
     # 유저 ID로 데이터베이스에서 유저 검색
-    db_user = session.exec(select(UserDB).where(UserDB.user_id == user_id)).first()
+    db_user = session.exec(select(User).where(User.user_id == user_id)).first()
     # print("Stored hash:", db_user.user_pw)
 
 
-    # 유저가 존재하지 않거나 비밀번호가 틀린 경우
-    if not db_user or not pwd_context.verify(db_user.user_pw, user_pw):
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+    # 유저가 존재하지 않는 경우
+    if not db_user:
+        raise HTTPException(status_code=400, detail="User not found")
+    
+    # 비밀번호가 틀린 경우
+    if not pwd_context.verify(db_user.user_pw, user_pw):
+        raise HTTPException(status_code=400, detail="wrong password")
     
     # JWT 액세스 토큰 생성
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -267,7 +267,7 @@ def grant_admin(
     ):
     
     # 유저 ID로 데이터베이스에서 유저 검색
-    db_user = session.exec(select(UserDB).where(UserDB.user_id == user_id)).first()
+    db_user = session.exec(select(User).where(User.user_id == user_id)).first()
     if not db_user:  # 유저가 존재하지 않으면 예외 발생
         raise HTTPException(status_code=404, detail="User not found")
     
@@ -285,7 +285,7 @@ def revoke_admin(
     ):
 
     # 유저 ID로 데이터베이스에서 유저 검색
-    db_user = session.exec(select(UserDB).where(UserDB.user_id == user_id)).first()
+    db_user = session.exec(select(User).where(User.user_id == user_id)).first()
     if not db_user:  # 유저가 존재하지 않으면 예외 발생
         raise HTTPException(status_code=404, detail="User not found")
     
