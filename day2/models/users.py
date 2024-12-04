@@ -1,5 +1,6 @@
+from sqlalchemy import Column, Integer, String, Boolean, DateTime  # SQLAlchemy를 사용해 컬럼 타입 지정
 from datetime import datetime  # 생성시간 및 수정시간 처리를 위해 사용
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel, Field
 from models.time_stamp import TimeStamp
 
 '''
@@ -18,6 +19,10 @@ class User(TimeStamp, table=True):
     user_id: str  # 유저 ID
     user_pw: str  # 비밀번호
     is_admin: int = 0  # 기본값은 일반 유저
+
+    # user_id: str = Field(sa_column=Column(String(255), nullable=False))  # 유저 ID
+    # user_pw: str = Field(sa_column=Column(String(255), nullable=False)) # 비밀번호
+    # is_admin: int = Field(sa_column=Column(Integer, default=0))  # 기본값은 일반 유저
 
 # 유저 데이터 생성 시 사용할 모델 (클라이언트 요청)
 class UserCreate(SQLModel):

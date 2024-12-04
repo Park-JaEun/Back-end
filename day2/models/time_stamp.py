@@ -9,8 +9,10 @@ DB id, 생성 시간, 마지막 수정 시간을 공통적으로 사용하는 �
 class TimeStamp(SQLModel):
     id: int = Field(default=None, primary_key=True)  # DB ID (Primary Key)
     created_at: datetime = Field(
-        default_factory=datetime.utcnow, sa_column=Column(DateTime, nullable=False)
+        default_factory=datetime.utcnow,
+        sa_type=DateTime
     )  # 생성 시간
     updated_at: datetime = Field(
-        default_factory=datetime.utcnow, sa_column=Column(DateTime, nullable=False, onupdate=datetime.utcnow)
+        default_factory=datetime.utcnow,
+        sa_type=DateTime
     )  # 마지막 수정 시간
