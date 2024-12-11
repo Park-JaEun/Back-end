@@ -36,6 +36,7 @@ def create_database():
 create_database()
 
 # SQLAlchemy 엔진 생성
+# DB 연결 설정 더 상세하게//
 engine = create_engine(MYSQL_URL, echo=True)
 
 # 데이터베이스 세션 제공

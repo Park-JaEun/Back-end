@@ -10,17 +10,17 @@ from database.modify_menu import db_create_menu, db_hard_delete_menu, db_soft_de
 
 router = APIRouter()
 
-@router.get("/menus/search/{menu_id}", response_model=MenuResponse)
+@router.get("/menu/{menu_id}", response_model=MenuResponse) # url 문법 알아보기 search는 필요 없어용
 def get_menu_by_id(menu_id: int, session: Session = Depends(get_db)):
     return search_menu_by_id(menu_id, session)
 
 # 모든 메뉴 출력
-@router.get("/menus/all", response_model=list[MenuResponse])
+@router.get("/menu/all", response_model=list[MenuResponse])
 def get_active_menus(session: Session = Depends(get_db)):
     return search_active_menus(session)
 
 # 모든 메뉴 출력 +)JWT 검증
-@router.get("/menus/admin/all", response_model=list[MenuResponse])
+@router.get("/menu/admin/all", response_model=list[MenuResponse])
 def get_menu(
     session: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
@@ -34,7 +34,7 @@ def get_menu(
 
 
 # 메뉴 추가 +)JWT 검증, admin 확인
-@router.post("/menus/admin/add", response_model=MenuResponse)
+@router.post("/menu/admin/add", response_model=MenuResponse)
 def create_menu(
     menu: MenuCreate, 
     session: Session = Depends(get_db), 
@@ -47,7 +47,7 @@ def create_menu(
     return db_create_menu(menu, session)
 
 # 메뉴 완전히 삭제 +)JWT 검증, admin 확인
-@router.delete("/menus/admin/delete/hard/{menu_id}")
+@router.delete("/menu/admin/delete/hard/{menu_id}")
 def hard_delete_menu(
     menu_id: int, 
     session: Session = Depends(get_db), 
@@ -62,13 +62,16 @@ def hard_delete_menu(
     return Response(status_code=200, content="hard delete menu")
 
 # 메뉴 삭제 +)JWT 검증, admin 확인
-@router.delete("/menus/admin/delete/soft/{menu_id}")
+# 메서드를 동사 url이 명사
+@router.delete("/menu/admin/soft/{menu_id}")
 def soft_delete_menu(
     menu_id: int, session: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)):
     
     # admin인지 확인 후 아니면 에러반환
-    if current_user.is_admin != 1:
+    # \로 코드 분리 가능!
+    if current_user.is_admin\
+        != 1:
         raise HTTPException(status_code=403, detail="관리자 권환이 필요합니다.")
     
     db_soft_delete_menu(menu_id,session)
@@ -77,7 +80,7 @@ def soft_delete_menu(
 
 
 # 메뉴 수정 +)JWT 검증, admin 확인
-@router.patch("/menus/admin/{menu_id}")
+@router.patch("/menu/admin/{menu_id}")
 def update_menu(
     menu_id: int, 
     new_menu: MenuCreate,   # 메뉴 업데이트 시에는 메뉴 이름과 offer만 입력하면 되니 Menu가 아닌 MenuCreate class

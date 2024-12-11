@@ -27,6 +27,7 @@ pwd_context = PasswordHasher()
 # HTTPBearer 보안 스키마
 security = HTTPBearer()
 
+#  토큰 매니저 클래스를 만들어 밑의 함수들을 넣어두면 다른 곳에서 호출할 때, inculde 하기 간편!
 
 def create_access_token(
         data: dict, 
@@ -34,7 +35,7 @@ def create_access_token(
     expires_delta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
+    expire = datetime.now() + (expires_delta or timedelta(minutes=15))  # 지원하지 않는 함수 수정
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -42,6 +43,8 @@ def decode_token(token: HTTPAuthorizationCredentials):
     try:
         payload = jwt.decode(token.credentials, SECRET_KEY, algorithms=[ALGORITHM])
         return payload.get("sub")
+    
+    # 에러에 따른 다른 에러 메세지 지정해야....
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.JWTError:
@@ -66,6 +69,7 @@ def get_current_user(
             raise HTTPException(status_code=401, detail="유저를 찾을 수 없습니다.")
         return user
     
+    # 에러에 따른 다른 에러 메세지 지정해야....
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다.")
     except jwt.JWTError:

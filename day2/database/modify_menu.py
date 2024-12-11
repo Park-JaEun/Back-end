@@ -43,6 +43,8 @@ def db_soft_delete_menu(
 
     session.commit()
 
+    # DB 오류 처리 추가하기
+
 
 def db_update_menu(
     menu_id: int, 

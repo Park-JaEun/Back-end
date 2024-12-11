@@ -6,7 +6,7 @@ from models.time_stamp import TimeStamp
 '''
 메뉴
 '''
-# 데이터베이스에서 사용할 기본 Menu 테이블 dho dkseho...
+# 데이터베이스에서 사용할 기본 Menu 테이블
 class Menu(TimeStamp, table=True):
     menuname: str = Field(sa_column=Column(String(255), nullable=False))  # 메뉴 이름
     one_time_offer: int = Field(sa_column=Column(Integer, default=0))  # 단품 제공 여부
@@ -29,3 +29,5 @@ class MenuResponse(SQLModel):
     menuname: str  # 메뉴 이름
     one_time_offer: int  # 단품 제공 여부
     is_delete: int  # 삭제 여부
+
+    # 응답용 스키마와 데이터 베이스 기본 선언 스키마를 따로 만들었으니 따로 사용해볼 것
